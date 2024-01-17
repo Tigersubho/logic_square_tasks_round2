@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cafe Search</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Cafe Search</h1>
+
+  <form onsubmit="handleSearch(event)">
+    <label for="searchBox">Search Cafe:</label>
+    <input type="text" id="searchBox" placeholder="Enter cafe name">
+    <button type="submit">Search</button>
+  </form>
+
+  <table id="cafeTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Street No</th>
+        <th>Locality</th>
+        <th>Postal Code</th>
+        <th>Latitude</th>
+        <th>Longitude</th>
+      </tr>
+    </thead>
+    <tbody id="cafeBody">
+      <!-- Cafe list will be dynamically populated here -->
+    </tbody>
+  </table>
+
+  <script>
+    // Function to fetch data from the given API endpoint
+    async function fetchData(endpoint) {
+      const response = await fetch(endpoint);
+      const data = await response.json();
+      return data;
+    }
+
+    // Function to populate the cafe list
+    async function populateCafeList() {
+      const cafesEndpoint = 'http://localhost:3000/cafes';
+      const placesEndpoint = 'http://localhost:3000/places';
+
+      const cafes = await fetchData(cafesEndpoint);
+      const places = await fetchData(placesEndpoint);
+
+      const cafeBody = document.getElementById('cafeBody');
+      cafeBody.innerHTML = ''; // Clear existing data
+
+      cafes.forEach(cafe => {
+        const matchedPlace = places.find(place => place.id === cafe.place_id);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${cafe.name}</td>
+          <td>${matchedPlace.street_no}</td>
+          <td>${matchedPlace.locality}</td>
+          <td>${matchedPlace.postal_code}</td>
+          <td>${matchedPlace.lat}</td>
+          <td>${matchedPlace.long}</td>
+        `;
+
+        cafeBody.appendChild(row);
+      });
+    }
+
+    // Function to search cafes dynamically
+    function searchCafes(searchTerm) {
+      const cafeRows = document.querySelectorAll('#cafeBody tr');
+      searchTerm = searchTerm.toLowerCase();
+
+      cafeRows.forEach(row => {
+        const cafeName = row.querySelector('td:first-child').textContent.toLowerCase();
+        if (cafeName.includes(searchTerm)) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // Function to handle form submission
+    function handleSearch(event) {
+      event.preventDefault(); // Prevent form submission and page reload
+      const searchTerm = document.getElementById('searchBox').value;
+      searchCafes(searchTerm);
+    }
+
+    // Populate cafe list on page load
+    window.onload = populateCafeList;
+  </script>
+
+</body>
+</html>
